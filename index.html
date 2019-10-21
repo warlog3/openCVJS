@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script async src="opencv.js" onload="onOpenCvReady();" type="text/javascript"></script>
+    <title>OpenCV.js</title>
+    <style>
+        /* display loading gif and hide webpage */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 100%;
+            background: rgba(255, 255, 255, .8) url('http://i.stack.imgur.com/FhHRx.gif') 50% 50% no-repeat;
+        }
+
+        /* prevent scrollbar from display during load */
+        body.loading {
+            overflow: hidden;
+        }
+
+        /* display the modal when loading class is added to body */
+        body.loading .modal {
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="modal"></div>
+    <input type="file" id="fileInput" name="file" />
+    <button type="button" id="circlesButton" class="btn btn-primary">Circle Detection</button>
+    <img id="imageSrc" alt="No Image" />
+    <canvas id="imageCanvas1"></canvas>
+    <canvas id="imageCanvas2"></canvas>
+    <canvas id="imageCanvas3"></canvas>
+    <canvas id="imageCanvas4"></canvas>
+    <canvas id="imageCanvas5"></canvas>
+    <canvas id="imageCanvas6"></canvas>
+    <canvas id="imageCanvas7"></canvas>
+
+
+    <a href="#" id="downloadButton">Download Image</a>
+
+    <script type="text/javascript">
+        document.body.classList.add("loading");
+
+        function onOpenCvReady() {
+            document.body.classList.remove("loading");
+        }
+
+
+        let imgElement = document.getElementById('imageSrc');
+        let inputElement = document.getElementById('fileInput');
+
+        inputElement.onchange = function () {
+            imgElement.src = URL.createObjectURL(event.target.files[0]);
+        };
+
+        imgElement.onload = function () {
+            let image = cv.imread(imgElement);
+            cv.imshow('imageCanvas1', image);
+            image.delete();
+        };
+
+        document.getElementById('circlesButton').onclick = function () {
+            this.disabled = true;
+            document.body.classList.add("loading");
+
+            //Processing
+            let srcMat1 = cv.imread('imageCanvas1');
+            let dst1 = new cv.Mat();
+            let srcMat2 = cv.imread('imageCanvas1');
+            let dst2 = new cv.Mat();
+            let srcMat3 = cv.imread('imageCanvas1');
+            let dst3 = cv.Mat.zeros(srcMat2.rows, srcMat2.cols, cv.CV_8UC3);
+            //Image ApproxPolyDP
+            let srcMat4 = cv.imread('imageCanvas1');
+            let dst4 = cv.Mat.zeros(srcMat4.rows, srcMat4.cols, cv.CV_8UC3);
+            //Contour 2
+            let srcMat5 = cv.imread('imageCanvas1');
+            let dst5 = new cv.Mat()
+            //Contour 3
+            let srcMat6 = cv.imread('imageCanvas1');
+            let dst6 = new cv.Mat()
+            //Contour 4
+            let srcMat7 = cv.imread('imageCanvas1');
+            let dst7 = new cv.Mat()
+
+            let lines = new cv.Mat();
+            let color = new cv.Scalar(255, 255, 255);
+
+            //Processing Part
+            //Show first result
+            cv.cvtColor(srcMat1, srcMat1, cv.COLOR_RGBA2GRAY);
+            cv.imshow('imageCanvas1', srcMat1);
+
+            //Show second result
+            cv.Canny(srcMat1, dst1, 50, 100, 3, false);
+            cv.imshow('imageCanvas2', dst1);
+
+            cv.cvtColor(srcMat2, srcMat2, cv.COLOR_RGBA2RGB);
+            let M = cv.Mat.ones(5, 5, cv.CV_8U);
+            // You can try more different parameters
+            cv.morphologyEx(srcMat2, dst2, cv.MORPH_GRADIENT, M);
+            cv.imshow('imageCanvas3', dst2);
+
+            //Show third result
+            cv.cvtColor(srcMat3, srcMat3, cv.COLOR_RGBA2GRAY, 0);
+            cv.Canny(srcMat3, srcMat3, 50, 200, 3);
+            cv.HoughLinesP(srcMat3, lines, 1, Math.PI / 180, 2, 0, 0);
+
+            for (let i = 0; i < lines.rows; ++i) {
+                let startPoint = new cv.Point(lines.data32S[i * 4], lines.data32S[i * 4 + 1]);
+                let endPoint = new cv.Point(lines.data32S[i * 4 + 2], lines.data32S[i * 4 + 3]);
+                cv.line(dst3, startPoint, endPoint, color);
+            }
+            cv.imshow('imageCanvas4', dst3);
+
+            //Image ApproxPolyDP
+            cv.cvtColor(srcMat2, srcMat2, cv.COLOR_RGBA2GRAY, 0);
+            cv.threshold(srcMat2, srcMat2, 100, 200, cv.THRESH_BINARY);
+            let contours = new cv.MatVector();
+            let hierarchy = new cv.Mat();
+            let poly = new cv.MatVector();
+            cv.findContours(srcMat2, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+            // approximates each contour to polygon
+            for (let i = 0; i < contours.size(); ++i) {
+                let tmp = new cv.Mat();
+                let cnt = contours.get(i);
+                // You can try more different parameters
+                cv.approxPolyDP(cnt, tmp, 100, true);
+                poly.push_back(tmp);
+                cnt.delete(); tmp.delete();
+            }
+            // draw contours with random Scalar
+            for (let i = 0; i < contours.size(); ++i) {
+                let color = new cv.Scalar(Math.round(Math.random() * 255), Math.round(Math.random() * 255),
+                    Math.round(Math.random() * 255));
+                cv.drawContours(dst4, poly, i, color, 5, 8, hierarchy, 0);
+            }
+            cv.imshow('imageCanvas5', dst4);
+
+            /*
+            cv.Canny(srcMat2, srcMat2, 50, 200, 3);
+            cv.HoughLinesP(srcMat2, lines, 1, Math.PI / 180, 2, 0, 0);
+
+            for (let i = 0; i < lines.rows; ++i) {
+                let startPoint = new cv.Point(lines.data32S[i * 4], lines.data32S[i * 4 + 1]);
+                let endPoint = new cv.Point(lines.data32S[i * 4 + 2], lines.data32S[i * 4 + 3]);
+                cv.line(dst2, startPoint, endPoint, color);
+            }
+            cv.imshow('imageCanvas3', dst2);
+            srcMat2.delete(); dst2.delete(); lines.delete();
+            */
+
+            this.disabled = false;
+            document.body.classList.remove("loading");
+
+            //Flushing all image processing data
+            srcMat1.delete();
+            srcMat2.delete();
+            dst1.delete();
+            dst2.delete();
+            lines.delete();
+
+            //let circlesMat = new cv.Mat();
+
+            //Kreiserkennnung
+            //cv.HoughCircles(srcMat, circlesMat, cv.HOUGH_GRADIENT, 1, 45, 75, 40, 0, 0);
+
+            /*for (let i = 0; i < circlesMat.cols; ++i) {
+                let x = circlesMat.data32F[i * 3];
+                let y = circlesMat.data32F[i * 3 + 1];
+                let radius = circlesMat.data32F[i * 3 + 2];
+
+                let center = new cv.Point(x, y);
+                cv.circle(displayMat, center, radius, [0, 0, 0, 255], 3);
+            }
+
+            cv.imshow('imageCanvas1', displayMat);
+
+            srcMat.delete();
+            displayMat.delete();
+            circlesMat.delete();
+            
+            this.disabled = false;
+            document.body.classList.remove("loading");*/
+        };
+    </script>
+
+</body>
+
+</html>
