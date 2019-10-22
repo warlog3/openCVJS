@@ -120,6 +120,8 @@
             }
             cv.imshow('imageCanvas4', dst3);
 
+            cv.cvtColor(dst2, dst2, cv.COLOR_RGBA2GRAY);
+            
             //Image ApproxPolyDP
             cv.cvtColor(srcMat2, srcMat2, cv.COLOR_RGBA2GRAY, 0);
             cv.threshold(srcMat2, srcMat2, 100, 200, cv.THRESH_BINARY);
@@ -138,12 +140,12 @@
             }
             // draw contours with random Scalar
             for (let i = 0; i < contours.size(); ++i) {
-                let color = new cv.Scalar(Math.round(Math.random() * 255), Math.round(Math.random() * 255),
-                    Math.round(Math.random() * 255));
+                let color = new cv.Scalar(255,255,255);
                 cv.drawContours(dst4, poly, i, color, 5, 8, hierarchy, 0);
             }
             cv.imshow('imageCanvas5', dst4);
 
+            
             /*
             cv.Canny(srcMat2, srcMat2, 50, 200, 3);
             cv.HoughLinesP(srcMat2, lines, 1, Math.PI / 180, 2, 0, 0);
